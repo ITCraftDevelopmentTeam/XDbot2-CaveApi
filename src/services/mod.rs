@@ -10,7 +10,7 @@ use actix_web::{HttpResponse, get, Responder, web};
 
 #[get("/")]
 pub async fn index(data_helper: web::Data<DataHelper>) -> impl Responder {
-    let cave_count = match data_helper.get_cave_count() {
+    let cave_count: data::CaveCount = match data_helper.get_cave_count() {
         Ok(count) => count,
         Err(err) => {
             return HttpResponse::InternalServerError().body(err);
