@@ -10,6 +10,14 @@ pub struct CaveCount {
 #[derive(Serialize)]
 pub struct IndexResponse {
     pub version: String,
-    pub count: CaveCount
+    pub count: CaveCount,
+    pub code: u16
+}
+
+
+#[derive(Serialize)]
+pub struct Error {
+    pub code: u16,
+    pub message: String
 }
 
