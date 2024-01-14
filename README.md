@@ -115,3 +115,9 @@ cargo run --release
 ---
 
 [![wakatime](https://wakatime.com/badge/github/ITCraftDevelopmentTeam/XDbot2-CaveApi.svg)](https://wakatime.com/badge/github/ITCraftDevelopmentTeam/XDbot2-CaveApi)
+[![Rust Release binary](https://github.com/ITCraftDevelopmentTeam/XDbot2-CaveApi/actions/workflows/release.yml/badge.svg)](https://github.com/ITCraftDevelopmentTeam/XDbot2-CaveApi/actions/workflows/release.yml)
+![GitHub License](https://img.shields.io/github/license/ITCraftDevelopmentTeam/XDbot2-CaveApi)
+![GitHub Release](https://img.shields.io/github/v/release/ITCraftDevelopmentTeam/XDbot2-CaveApi)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/ITCraftDevelopmentTeam/XDbot2-CaveApi)
+![GitHub repo size](https://img.shields.io/github/repo-size/ITCraftDevelopmentTeam/XDbot2-CaveApi)
+
