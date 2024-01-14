@@ -55,7 +55,8 @@ pub async fn random(
         id: cave.id,
         content: cave.content.clone(),
         sender: cave.sender.clone(),
-        time: cave.time
+        time: cave.time.clone(),
+        images: cave.images.clone()
     })
 }
 

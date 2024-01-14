@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -27,5 +29,6 @@ pub struct CaveItem {
     pub id: u64,
     pub content: String,
     pub time: f64,
-    pub sender: String
+    pub sender: String,
+    pub images: HashMap<String, Option<String>>
 }

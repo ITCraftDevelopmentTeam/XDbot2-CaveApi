@@ -1,9 +1,12 @@
 use serde::Deserialize;
+use regex::Regex;
 use serde_json::{Value, Map};
 use rand::seq::SliceRandom;
-use log::error;
+use log::{error, warn};
+use std::collections::HashMap;
 use std::io::Read;
 use std::path::PathBuf;
+use base64::Engine;
 use std::fs::File;
 
 pub struct CaveCount {
@@ -22,7 +25,8 @@ pub struct CaveItemData {
     pub id: u64,
     pub content: String,
     pub sender: String,
-    pub time: f64
+    pub time: f64,
+    pub images: HashMap<String, Option<String>>
 }
 
 pub struct DataHelper {
@@ -68,6 +72,7 @@ impl DataHelper {
             valid: data.data.keys().count()
         })
     }
+    
 
     fn get_cave_list(&self, max_length: usize, no_image: bool) -> Result<Vec<CaveItemData>, String> {
         let original_data = match self.load_cave_data() {
@@ -84,6 +89,35 @@ impl DataHelper {
         Ok(cave_list)
     }
 
+    fn get_images(&self, content: String) -> HashMap<String, Option<String>> {
+        let mut images: HashMap<String, Option<String>> = HashMap::new();
+        for image_id in get_all_images(content) {
+            images.insert(image_id.clone(), self.get_image(image_id));
+        }
+        images
+    }
+
+    pub fn get_image(&self, image_id: String) -> Option<String> {
+        let path: PathBuf = self.base_path.join(format!("caveImages/{}.png", image_id));
+        let mut file: File = match File::open(path) {
+            Ok(ret) => ret,
+            Err(err) => {
+                warn!("Failed to open {}: {}", image_id, err.to_string());
+                return None
+            }
+        };
+        let mut buffer = Vec::new();
+        if let Err(err) = file.read_to_end(&mut buffer) {
+            warn!("Failed to read {}: {}", image_id, err.to_string());
+            return None
+        }
+        let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
+        let base64_string = engine.encode(&buffer);
+        
+        Some(base64_string.to_string())
+
+    }
+
     pub fn random_cave(&self, max_length: usize, no_image: bool) -> Result<CaveItemData, String> {
         let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
         let cave_list: Vec<CaveItemData> = match self.get_cave_list(max_length, no_image) {
@@ -96,7 +130,8 @@ impl DataHelper {
                 id: item.id,
                 content: item.content.clone(),
                 sender: item.sender.clone(),
-                time: item.time.clone()
+                time: item.time.clone(),
+                images: self.get_images(item.content.clone())
             }),
             None => Err("没有符合要求的回声洞".to_string())
         }
@@ -104,10 +139,27 @@ impl DataHelper {
 
 }
 
-fn get_json_value(json: &Value, key: &'static str, default: &'static str) -> String {
+fn get_json_value(json: &Value, key: &str, default: &str) -> String {
     match json.get(key) {
         Some(value) => value.as_str().unwrap_or(default).to_string(),
         None => default.to_string()
+    }
+}
+
+fn parse_cave_data(json_data: &Value) -> CaveItemData {
+    let content = get_json_value(json_data, "text", "");
+    CaveItemData {
+        id: match json_data.get("id") {
+            Some(value) => value.as_u64().unwrap_or(std::u64::MAX),
+            None => std::u64::MAX
+        },
+        content: content.clone(),
+        sender: get_cave_sender(json_data.get("sender")),
+        time: match json_data.get("time") {
+            Some(value) => value.as_f64().unwrap_or(0.0),
+            None => 0.0
+        },
+        images: HashMap::new()
     }
 }
 
@@ -121,19 +173,14 @@ fn check_cave(cave: &CaveItemData, max_length: usize, no_image: bool) -> bool {
     }
 }
 
-fn parse_cave_data(json_data: &Value) -> CaveItemData {
-    CaveItemData {
-        id: match json_data.get("id") {
-            Some(value) => value.as_u64().unwrap_or(std::u64::MAX),
-            None => std::u64::MAX
-        },
-        content: get_json_value(json_data, "text", ""),
-        sender: get_cave_sender(json_data.get("sender")),
-        time: match json_data.get("time") {
-            Some(value) => value.as_f64().unwrap_or(0.0),
-            None => 0.0
-        },
+fn get_all_images(content: String) -> Vec<String> {
+    let re = Regex::new(r#"\[\[Img:\d+\.\d+\]\]\]"#);
+    let mut images = Vec::new();
+    for mat in re.expect("Failed to init Regex").find_iter(&content) {
+        let s = mat.as_str().to_string();
+        images.push((&s[6..(s.len() - 3)]).to_string());
     }
+    return images
 }
 
 fn get_cave_sender(json_data: Option<&Value>) -> String {
