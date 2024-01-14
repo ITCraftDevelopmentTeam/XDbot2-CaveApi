@@ -25,6 +25,7 @@ async fn main() -> Result<()> {
                 base_path: PathBuf::from(&conf.source)
             }))
             .service(services::index)
+            .service(services::random)
     })
     .bind((conf.host.clone(), conf.port))?
     .run()

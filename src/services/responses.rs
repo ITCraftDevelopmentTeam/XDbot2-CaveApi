@@ -21,3 +21,10 @@ pub struct Error {
     pub message: String
 }
 
+#[derive(Serialize)]
+pub struct CaveItem {
+    pub code: u16,
+    pub id: u64,
+    pub content: String,
+    pub sender: String
+}

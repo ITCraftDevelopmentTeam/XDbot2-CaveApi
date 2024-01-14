@@ -1,13 +1,17 @@
 mod responses;
 pub mod data;
+mod query;
 
 use data::DataHelper;
 use responses::{
     IndexResponse,
     CaveCount,
-    Error
+    Error,
+    CaveItem
 };
 use actix_web::{HttpResponse, get, Responder, web};
+
+
 
 #[get("/")]
 pub async fn index(data_helper: web::Data<DataHelper>) -> impl Responder {
@@ -26,10 +30,33 @@ pub async fn index(data_helper: web::Data<DataHelper>) -> impl Responder {
             total: cave_count.total,
             valid: cave_count.valid as u64
         },
-        code: 0
+        code: 200
     })
 }
 
+
+#[get("/random")]
+pub async fn random(
+    data_helper: web::Data<DataHelper>,
+    query_params: web::Query<query::Random>
+) -> impl Responder {
+    let cave = match data_helper.random_cave(
+        query_params.max_length.unwrap_or(usize::MAX),
+        query_params.no_image.unwrap_or(false)
+    ) {
+        Ok(data) => data,
+        Err(err) => return HttpResponse::InternalServerError().json(Error {
+            code: 500,
+            message: err
+        })
+    };
+    HttpResponse::Ok().json(CaveItem {
+        code: 200,
+        id: cave.id,
+        content: cave.content.clone(),
+        sender: cave.sender.clone()
+    })
+}
 
 
 
