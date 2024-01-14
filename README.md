@@ -111,3 +111,7 @@ cargo run --release
 ## 注意事项
 
 当状态码在 `500`、`200` 之外时，API 响应不是一个 Json
+
+---
+
+[![wakatime](https://wakatime.com/badge/github/ITCraftDevelopmentTeam/XDbot2-CaveApi.svg)](https://wakatime.com/badge/github/ITCraftDevelopmentTeam/XDbot2-CaveApi)
