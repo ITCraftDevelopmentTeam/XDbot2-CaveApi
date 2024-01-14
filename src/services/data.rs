@@ -7,13 +7,13 @@ use std::path::PathBuf;
 use std::fs::File;
 
 pub struct CaveCount {
-    pub total: u64,
+    pub total: usize,
     pub valid: usize
 }
 
 #[derive(Deserialize)]
 pub struct CaveData {
-    pub count: u64,
+    pub count: usize,
     pub data: Map<String, Value>
 }
 
@@ -21,7 +21,8 @@ pub struct CaveData {
 pub struct CaveItemData {
     pub id: u64,
     pub content: String,
-    pub sender: String
+    pub sender: String,
+    pub time: f64
 }
 
 pub struct DataHelper {
@@ -91,7 +92,12 @@ impl DataHelper {
         };
         
         match cave_list.choose(&mut rng) {
-            Some(item) => Ok(CaveItemData { id: item.id, content: item.content.clone(), sender: item.sender.clone() }),
+            Some(item) => Ok(CaveItemData {
+                id: item.id,
+                content: item.content.clone(),
+                sender: item.sender.clone(),
+                time: item.time.clone()
+            }),
             None => Err("没有符合要求的回声洞".to_string())
         }
     }
@@ -122,7 +128,11 @@ fn parse_cave_data(json_data: &Value) -> CaveItemData {
             None => std::u64::MAX
         },
         content: get_json_value(json_data, "text", ""),
-        sender: get_cave_sender(json_data.get("sender"))
+        sender: get_cave_sender(json_data.get("sender")),
+        time: match json_data.get("time") {
+            Some(value) => value.as_f64().unwrap_or(0.0),
+            None => 0.0
+        },
     }
 }
 

@@ -2,8 +2,8 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct CaveCount {
-    pub total: u64,
-    pub valid: u64
+    pub total: usize,
+    pub valid: usize
 }
 
 
@@ -26,5 +26,6 @@ pub struct CaveItem {
     pub code: u16,
     pub id: u64,
     pub content: String,
+    pub time: f64,
     pub sender: String
 }

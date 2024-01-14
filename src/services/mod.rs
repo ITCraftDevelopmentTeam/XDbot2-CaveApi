@@ -28,7 +28,7 @@ pub async fn index(data_helper: web::Data<DataHelper>) -> impl Responder {
         version: env!("CARGO_PKG_VERSION").to_string(),
         count: CaveCount {
             total: cave_count.total,
-            valid: cave_count.valid as u64
+            valid: cave_count.valid
         },
         code: 200
     })
@@ -54,7 +54,8 @@ pub async fn random(
         code: 200,
         id: cave.id,
         content: cave.content.clone(),
-        sender: cave.sender.clone()
+        sender: cave.sender.clone(),
+        time: cave.time
     })
 }
 
