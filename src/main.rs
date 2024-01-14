@@ -22,7 +22,8 @@ async fn main() -> Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(DataHelper {
-                base_path: PathBuf::from(&conf.source)
+                base_path: PathBuf::from(&conf.source),
+                implements: conf.implements.clone()
             }))
             .service(services::index)
             .service(services::random)

@@ -43,7 +43,7 @@ pub async fn random(
     let cave = match data_helper.random_cave(
         query_params.max_length.unwrap_or(usize::MAX),
         query_params.no_image.unwrap_or(false)
-    ) {
+    ).await {
         Ok(data) => data,
         Err(err) => return HttpResponse::InternalServerError().json(Error {
             code: 500,

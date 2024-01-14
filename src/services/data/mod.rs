@@ -1,3 +1,5 @@
+mod sender;
+
 use serde::Deserialize;
 use regex::Regex;
 use serde_json::{Value, Map};
@@ -30,7 +32,8 @@ pub struct CaveItemData {
 }
 
 pub struct DataHelper {
-    pub base_path: PathBuf
+    pub base_path: PathBuf,
+    pub implements: Vec<String>
 }
 
 
@@ -118,7 +121,7 @@ impl DataHelper {
 
     }
 
-    pub fn random_cave(&self, max_length: usize, no_image: bool) -> Result<CaveItemData, String> {
+    pub async fn random_cave(&self, max_length: usize, no_image: bool) -> Result<CaveItemData, String> {
         let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
         let cave_list: Vec<CaveItemData> = match self.get_cave_list(max_length, no_image) {
             Ok(list) => list,
@@ -129,7 +132,7 @@ impl DataHelper {
             Some(item) => Ok(CaveItemData {
                 id: item.id,
                 content: item.content.clone(),
-                sender: item.sender.clone(),
+                sender: sender::get_nickname_by_id(item.sender.clone(), &self.implements).await,
                 time: item.time.clone(),
                 images: self.get_images(item.content.clone())
             }),
