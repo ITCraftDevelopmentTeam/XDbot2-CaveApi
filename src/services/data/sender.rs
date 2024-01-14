@@ -1,5 +1,6 @@
 use log::debug;
 use reqwest;
+use regex::Regex;
 use serde::Deserialize;
 use serde_json::{self, Value, Map};
 
@@ -41,6 +42,10 @@ fn get_nickname_from_response(response: ImplResponse) -> Result<String, ()> {
 }
 
 pub async fn get_nickname_by_id(user_id: String, implements: &Vec<String>) -> String {
+    let re = Regex::new(r#"\d+"#).expect("Failed to build regex");
+    if !re.is_match(&user_id) {
+        return user_id;
+    }
     let mut nickname = "未知".to_string();
     for implement in implements {
         nickname = match get_nickname(&user_id, implement).await {
