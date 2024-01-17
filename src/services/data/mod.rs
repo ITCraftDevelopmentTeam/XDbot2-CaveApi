@@ -6,10 +6,12 @@ use serde_json::{Value, Map};
 use rand::seq::SliceRandom;
 use log::{error, warn};
 use std::collections::HashMap;
-use std::io::Read;
+// use std::io::Read;
+use tokio::fs;
 use std::path::PathBuf;
 use base64::Engine;
-use std::fs::File;
+
+// use std::fs::File;
 
 pub struct CaveCount {
     pub total: usize,
@@ -39,23 +41,30 @@ pub struct DataHelper {
 
 impl DataHelper {
 
-    fn load_cave_data(&self) -> Result<CaveData, String> {
+    async fn load_cave_data(&self) -> Result<CaveData, String> {
         let path = self.base_path.join("cave.data.json");
-        let mut file = match File::open(path.clone()) {
-            Ok(f) => f,
-            Err(err) => {
-                error!("Failed to open {}: {}", path.display(), err);
-                return Err(err.to_string());
-            }
-        };
-        let mut json_data = String::new();
-        match file.read_to_string(&mut json_data) {
-            Ok(_) => {},
+        // let mut file = match File::open(path.clone()) {
+        //     Ok(f) => f,
+        //     Err(err) => {
+        //         error!("Failed to open {}: {}", path.display(), err);
+        //         return Err(err.to_string());
+        //     }
+        // };
+        // let mut json_data = String::new();
+        // match file.read_to_string(&mut json_data) {
+        //     Ok(_) => {},
+        //     Err(err) => {
+        //         error!("Failed to read file {}: {}", path.display(), err);
+        //         return Err(err.to_string());
+        //     }
+        // }
+        let json_data = match fs::read_to_string(&path).await {
+            Ok(data) => data,
             Err(err) => {
                 error!("Failed to read file {}: {}", path.display(), err);
                 return Err(err.to_string());
             }
-        }
+        };
         match serde_json::from_str(&json_data) {
             Ok(data) => Ok(data),
             Err(err) => {
@@ -65,8 +74,8 @@ impl DataHelper {
         }
     }
 
-    pub fn get_cave_count(&self) -> Result<CaveCount, String> {
-        let data = match self.load_cave_data() {
+    pub async fn get_cave_count(&self) -> Result<CaveCount, String> {
+        let data = match self.load_cave_data().await {
             Ok(value) => value,
             Err(e) => {return Err(e);}
         };
@@ -77,8 +86,8 @@ impl DataHelper {
     }
     
 
-    fn get_cave_list(&self, max_length: usize, no_image: bool) -> Result<Vec<CaveItemData>, String> {
-        let original_data = match self.load_cave_data() {
+    async fn get_cave_list(&self, max_length: usize, no_image: bool) -> Result<Vec<CaveItemData>, String> {
+        let original_data = match self.load_cave_data().await {
             Ok(data) => data.data,
             Err(err) => return Err(err)
         };
@@ -92,28 +101,35 @@ impl DataHelper {
         Ok(cave_list)
     }
 
-    fn get_images(&self, content: String) -> HashMap<String, Option<String>> {
+    async fn get_images(&self, content: String) -> HashMap<String, Option<String>> {
         let mut images: HashMap<String, Option<String>> = HashMap::new();
         for image_id in get_all_images(content) {
-            images.insert(image_id.clone(), self.get_image(image_id));
+            images.insert(image_id.clone(), self.get_image(image_id).await);
         }
         images
     }
 
-    pub fn get_image(&self, image_id: String) -> Option<String> {
+    pub async fn get_image(&self, image_id: String) -> Option<String> {
         let path: PathBuf = self.base_path.join(format!("caveImages/{}.png", image_id));
-        let mut file: File = match File::open(path) {
-            Ok(ret) => ret,
+        // let mut file: File = match File::open(path) {
+        //     Ok(ret) => ret,
+        //     Err(err) => {
+        //         warn!("Failed to open {}: {}", image_id, err.to_string());
+        //         return None
+        //     }
+        // };
+        // let mut buffer = Vec::new();
+        // if let Err(err) = file.read_to_end(&mut buffer) {
+        //     warn!("Failed to read {}: {}", image_id, err.to_string());
+        //     return None
+        // }
+        let buffer = match fs::read(&path).await {
+            Ok(buf) => buf,
             Err(err) => {
-                warn!("Failed to open {}: {}", image_id, err.to_string());
+                warn!("Failed to read {}: {}", image_id, err.to_string());
                 return None
             }
         };
-        let mut buffer = Vec::new();
-        if let Err(err) = file.read_to_end(&mut buffer) {
-            warn!("Failed to read {}: {}", image_id, err.to_string());
-            return None
-        }
         let engine = base64::engine::general_purpose::STANDARD_NO_PAD;
         let base64_string = engine.encode(&buffer);
         
@@ -123,7 +139,7 @@ impl DataHelper {
 
     pub async fn random_cave(&self, max_length: usize, no_image: bool) -> Result<CaveItemData, String> {
         let mut rng: rand::prelude::ThreadRng = rand::thread_rng();
-        let cave_list: Vec<CaveItemData> = match self.get_cave_list(max_length, no_image) {
+        let cave_list: Vec<CaveItemData> = match self.get_cave_list(max_length, no_image).await {
             Ok(list) => list,
             Err(err) => return Err(err)
         };
@@ -134,7 +150,7 @@ impl DataHelper {
                 content: item.content.clone(),
                 sender: sender::get_nickname_by_id(item.sender.clone(), &self.implements).await,
                 time: item.time.clone(),
-                images: self.get_images(item.content.clone())
+                images: self.get_images(item.content.clone()).await
             }),
             None => Err("没有符合要求的回声洞".to_string())
         }
