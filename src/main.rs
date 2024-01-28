@@ -5,7 +5,7 @@ mod services;
 use env_logger;
 use dotenv::dotenv;
 use config::{Config, get_config};
-use actix_web::{HttpServer, App, web};
+use actix_web::{HttpServer, App, web, middleware};
 use log::info;
 use services::data::DataHelper;
 use std::io::Result;
@@ -25,6 +25,7 @@ async fn main() -> Result<()> {
                 base_path: PathBuf::from(&conf.source),
                 implements: conf.implements.clone()
             }))
+            .wrap(middleware::Logger::default()) 
             .service(services::index)
             .service(services::random)
     })
